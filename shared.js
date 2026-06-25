@@ -5,7 +5,7 @@ const DEFAULT_EMPLOYEES = [
     {
         empId: "EMP101",
         uname: "vijay",
-        pass: "25-06-1995",
+        pass: "26-04-2005",
         name: "Vijay Mahes",
         dept: "IT",
         sick: 10,
@@ -55,6 +55,12 @@ const DEFAULT_LEAVES = [
 
 // DB Init
 function initDatabase() {
+    const existing = localStorage.getItem("lms_employees");
+    if (existing && existing.includes("25-06-1995")) {
+        localStorage.removeItem("lms_employees");
+        localStorage.removeItem("lms_leaves");
+    }
+
     if (!localStorage.getItem("lms_employees")) {
         localStorage.setItem("lms_employees", JSON.stringify(DEFAULT_EMPLOYEES));
     }
