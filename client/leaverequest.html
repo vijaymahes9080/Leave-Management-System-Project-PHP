@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>::Leave Management::</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="table.css">
+    <style>
+        th { text-align: left; padding: 8px; }
+        td { padding: 8px; }
+        .error-button {
+            background-color: #c71c1c;
+            color: white;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="textview">
+        <center>
+            <h1>Leave Management System</h1>
+            
+            <!-- Navigation bar placeholder -->
+            <div id="navi-container"></div>
+            
+            <h2>Request For A Leave</h2>
+            
+            <form id="leaveRequestForm">
+                <table id="main-form-table">
+                    <tr>
+                        <th>* Select Leave Type:</th>
+                        <td>
+                            <select name="type" id="type" class="textbox shadow selected" style="width:200px;">
+                                <option value="Sick Leave" id="opt-sick">Sick Leave</option>
+                                <option value="Earn Leave" id="opt-earn">Earn Leave</option>
+                                <option value="Casual Leave" id="opt-casual">Casual Leave</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>* Starting Date :</th>
+                        <td>
+                            <input type="date" name="start_date" id="start_date" class="textbox shadow selected" required>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>* No Of Leave Days :</th>
+                        <td>
+                            <input type="number" min="1" name="leavedays" id="leavedays" class="textbox shadow selected" step="1" required>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>* Reason For Leave :</th>
+                        <td>
+                            <input type="text" name="leavereason" id="leavereason" class="textbox shadow selected" required>
+                        </td>
+                    </tr>
+                </table>
+
+                <br/>
+                <h3>Timetable Substitution details (if applicable):</h3>
+                <br/>
+                
+                <table style="border-collapse: collapse;">
+                    <tr>
+                        <th>Date</th>
+                        <th>Time</th>        
+                        <th>Semester</th>
+                        <th>Division/Batch</th>
+                        <th>Room No.</th>
+                        <th>Subject</th>
+                        <th>Staff Member Who Will Engage Class</th>
+                    </tr>
+                    <tr>
+                        <td><input type="text" name="val1" class="textbox shadow selected" style="width:90px;"></td>
+                        <td><input type="text" name="val2" class="textbox shadow selected" style="width:100px;"></td>        
+                        <td><input type="number" min="1" max="8" step="1" name="val3" class="textbox shadow selected" style="width:40px;"></td>
+                        <td><input type="text" name="val4" class="textbox shadow selected" style="width:50px;"></td>
+                        <td><input type="text" name="val5" class="textbox shadow selected" style="width:100px;"></td>
+                        <td><input type="text" name="val6" class="textbox shadow selected" style="width:50px;"></td>
+                        <td><input type="text" name="val7" class="textbox shadow selected" style="width:50px;"></td>
+                    </tr>
+                </table>
+                
+                <br/>
+                <input type="submit" value="Request a Leave" class="login-button shadow">
+            </form>
+        </center>
+    </div>
+
+    <!-- Load database and navigation -->
+    <script src="../shared.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const session = getCurrentSession();
+            if (!session || session.role !== "client") {
+                window.location.href = "index.html";
+                return;
+            }
+
+            injectNavbar("../");
+
+            const employees = getEmployees();
+            const freshUser = employees.find(emp => emp.empId === session.user.empId) || session.user;
+
+            // Handle disabling options with 0 leaves
+            const optSick = document.getElementById("opt-sick");
+            const optEarn = document.getElementById("opt-earn");
+            const optCasual = document.getElementById("opt-casual");
+
+            if (freshUser.sick <= 0) {
+                optSick.disabled = true;
+                optSick.text += " (0 remaining)";
+            } else {
+                optSick.text += ` (${freshUser.sick} remaining)`;
+            }
+
+            if (freshUser.earn <= 0) {
+                optEarn.disabled = true;
+                optEarn.text += " (0 remaining)";
+            } else {
+                optEarn.text += ` (${freshUser.earn} remaining)`;
+            }
+
+            if (freshUser.casual <= 0) {
+                optCasual.disabled = true;
+                optCasual.text += " (0 remaining)";
+            } else {
+                optCasual.text += ` (${freshUser.casual} remaining)`;
+            }
+
+            // Set default date to today
+            const todayStr = new Date().toISOString().substring(0, 10);
+            document.getElementById("start_date").value = todayStr;
+
+            // Form Submit handler
+            document.getElementById("leaveRequestForm").addEventListener("submit", function(event) {
+                event.preventDefault();
+
+                const leaveType = document.getElementById("type").value;
+                const startDate = document.getElementById("start_date").value;
+                const leaveDays = parseInt(document.getElementById("leavedays").value, 10);
+                const reason = document.getElementById("leavereason").value.trim();
+
+                if (!startDate) {
+                    alert("Please select starting date!");
+                    return;
+                }
+                if (isNaN(leaveDays) || leaveDays <= 0) {
+                    alert("Please enter a valid number of leave days!");
+                    return;
+                }
+                if (reason === "") {
+                    alert("Please enter a reason for the leave!");
+                    return;
+                }
+
+                // Check remaining balance
+                let balance = 0;
+                if (leaveType === "Sick Leave") balance = freshUser.sick;
+                else if (leaveType === "Earn Leave") balance = freshUser.earn;
+                else if (leaveType === "Casual Leave") balance = freshUser.casual;
+
+                if (leaveDays > balance) {
+                    alert(`Cannot request ${leaveDays} days. Only ${balance} days remaining for ${leaveType}!`);
+                    return;
+                }
+
+                // Calculate end date
+                const start = new Date(startDate);
+                const end = new Date(start);
+                end.setDate(start.getDate() + (leaveDays - 1));
+                const endDateStr = end.toISOString().substring(0, 10);
+
+                // Add to Mock DB
+                const leavesList = getLeaves();
+                const newId = leavesList.length > 0 ? Math.max(...leavesList.map(l => l.id)) + 1 : 1;
+                
+                const newRequest = {
+                    id: newId,
+                    empId: freshUser.empId,
+                    empName: freshUser.name,
+                    type: leaveType,
+                    startDate: startDate,
+                    endDate: endDateStr,
+                    days: leaveDays,
+                    status: "Pending",
+                    reason: "",
+                    requestDate: todayStr,
+                    dept: freshUser.dept
+                };
+
+                leavesList.push(newRequest);
+                saveLeaves(leavesList);
+
+                alert("Leave request submitted successfully!");
+                window.location.href = "my_leaves.html";
+            });
+        });
+    </script>
+</body>
+</html>

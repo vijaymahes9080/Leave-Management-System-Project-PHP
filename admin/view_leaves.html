@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>::Leave Management::</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="table.css">
+    <style>
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 90%;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .btn-action {
+            padding: 5px 10px;
+            text-decoration: none;
+            color: white;
+            border-radius: 4px;
+            font-size: 0.9em;
+            margin-right: 5px;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-accept { background-color: #059669; }
+        .btn-reject { background-color: #dc2626; }
+    </style>
+</head>
+<body>
+    <div class="textview">
+        <center>
+            <h1>Leave Management System</h1>
+            
+            <!-- Navigation bar placeholder -->
+            <div id="navi-container"></div>
+            
+            <h2>View Employees' Leaves</h2>
+            
+            <div id="count-label" style="font-weight: bold; margin-bottom: 10px;"></div>
+            
+            <div id="leaves-table-container">
+                <!-- Table will be injected here -->
+            </div>
+        </center>
+    </div>
+
+    <!-- Load database and navigation -->
+    <script src="../shared.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const session = getCurrentSession();
+            if (!session || session.role !== "admin") {
+                window.location.href = "index.html";
+                return;
+            }
+
+            injectNavbar("../");
+            renderLeavesTable();
+        });
+
+        function renderLeavesTable() {
+            const session = getCurrentSession();
+            const adminDept = session.user.dept;
+            const leaves = getLeaves();
+            
+            // Filter leaves that are "Pending" and belong to the admin's department
+            const pendingLeaves = leaves.filter(l => l.status === "Pending" && l.dept === adminDept);
+            
+            const countLabel = document.getElementById("count-label");
+            countLabel.innerText = pendingLeaves.length + " Pending Leave Request(s) in " + adminDept + " Department";
+
+            const container = document.getElementById("leaves-table-container");
+            if (pendingLeaves.length === 0) {
+                container.innerHTML = "<p>No pending leave requests found.</p>";
+                return;
+            }
+
+            let tableHTML = `
+                <table>
+                    <tr>
+                        <th>Employee Name</th>
+                        <th>Leave Type</th>
+                        <th>Request Date</th>
+                        <th>Leave Days</th>
+                        <th>Starting Date</th>
+                        <th>Ending Date</th>
+                        <th>Action</th>
+                    </tr>
+            `;
+
+            pendingLeaves.forEach(l => {
+                tableHTML += `
+                    <tr>
+                        <td>${l.empName}</td>
+                        <td>${l.type}</td>
+                        <td>${l.requestDate}</td>
+                        <td>${l.days}</td>
+                        <td>${l.startDate}</td>
+                        <td>${l.endDate}</td>
+                        <td>
+                            <button class="btn-action btn-accept" onclick="acceptLeave(${l.id})">Accept</button>
+                            <button class="btn-action btn-reject" onclick="rejectLeave(${l.id})">Reject</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `</table>`;
+            container.innerHTML = tableHTML;
+        }
+
+        function acceptLeave(leaveId) {
+            const leaves = getLeaves();
+            const employees = getEmployees();
+            
+            const leave = leaves.find(l => l.id === leaveId);
+            if (!leave) return;
+
+            const employee = employees.find(emp => emp.empId === leave.empId);
+            if (!employee) {
+                alert("Error: Employee not found!");
+                return;
+            }
+
+            // Deduct leaves
+            let error = false;
+            if (leave.type === "Sick Leave") {
+                if (employee.sick < leave.days) error = true;
+                else employee.sick -= leave.days;
+            } else if (leave.type === "Earn Leave") {
+                if (employee.earn < leave.days) error = true;
+                else employee.earn -= leave.days;
+            } else if (leave.type === "Casual Leave") {
+                if (employee.casual < leave.days) error = true;
+                else employee.casual -= leave.days;
+            }
+
+            if (error) {
+                alert("Processing Error: Insufficient leave balance!");
+                return;
+            }
+
+            // Update database
+            leave.status = "Granted";
+            saveLeaves(leaves);
+            saveEmployees(employees);
+
+            alert(`Leave request approved successfully!\nA mock confirmation email has been simulated and sent to: ${employee.uname}@gmail.com`);
+            renderLeavesTable();
+        }
+
+        function rejectLeave(leaveId) {
+            if (!confirm("Are you sure you want to reject this leave request?")) return;
+
+            const leaves = getLeaves();
+            const leave = leaves.find(l => l.id === leaveId);
+            if (!leave) return;
+
+            leave.status = "Rejected";
+            saveLeaves(leaves);
+
+            alert("Leave request rejected successfully.");
+            renderLeavesTable();
+        }
+    </script>
+</body>
+</html>

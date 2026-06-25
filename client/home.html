@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>::Leave Management::</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="table.css">
+    <style>
+        th { text-align: left; padding: 8px; }
+        td { padding: 8px; }
+    </style>
+    <script>
+        function startTime() {
+            var today = new Date();
+            var h = today.getHours();
+            var m = today.getMinutes();
+            var s = today.getSeconds();
+            m = checkTime(m);
+            s = checkTime(s);
+            const clockEl = document.getElementById('clock');
+            if (clockEl) {
+                clockEl.innerHTML = h + ":" + m + ":" + s;
+            }
+            setTimeout(startTime, 500);
+        }
+        function checkTime(i) {
+            if (i < 10) {i = "0" + i};
+            return i;
+        }
+    </script>
+</head>
+<body onload="startTime()">
+    <div class="textview">
+        <h1>Leave Management System</h1>
+        
+        <!-- Navigation bar placeholder -->
+        <div id="navi-container"></div>
+        
+        <h2 id="welcome-message">Welcome, Client</h2>
+        
+        <div id="info-message"></div>
+
+        <table style="margin: 0 auto; border-collapse: collapse; text-align: left;">
+            <tr>
+                <th>Profile Picture :</th>
+                <td>
+                    <img id="propic" src="pro-pic/default-image.png" height="200" width="200" style="border: 1px solid #ccc; display: block; margin-bottom: 5px;">
+                    <a href="#" onclick="alert('Profile picture upload is a mockup in static version.')">Change</a>&nbsp;&nbsp;&nbsp;
+                    <a href="#" onclick="alert('Profile picture deletion is a mockup in static version.')">Delete</a>
+                </td>
+            </tr>
+            <tr>
+                <th>User Name :</th>
+                <td id="td-uname"></td>
+            </tr>
+            <tr>
+                <th>Email ID :</th>
+                <td id="td-email"></td>
+            </tr>
+            <tr>
+                <th>Employee Name :</th>
+                <td id="td-name"></td>
+            </tr>
+            <tr>
+                <th>Department :</th>
+                <td id="td-dept"></td>
+            </tr>
+            <tr>
+                <th>Earn Leave :</th>
+                <td id="td-earn"></td>
+            </tr>
+            <tr>
+                <th>Sick Leave :</th>
+                <td id="td-sick"></td>
+            </tr>
+            <tr>
+                <th>Casual Leave :</th>
+                <td id="td-casual"></td>
+            </tr>
+            <tr>
+                <th>Date Of Joining :</th>
+                <td id="td-doj">01-01-2022</td>
+            </tr>
+            <tr>
+                <th>Current Time :</th>
+                <td><div id="clock"></div></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Load database and navigation -->
+    <script src="../shared.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const session = getCurrentSession();
+            if (!session || session.role !== "client") {
+                window.location.href = "index.html";
+                return;
+            }
+
+            injectNavbar("../");
+
+            const user = session.user;
+            
+            // Populate dashboard fields
+            document.getElementById("welcome-message").innerText = "Welcome, " + user.name;
+            document.getElementById("td-uname").innerText = user.uname;
+            document.getElementById("td-email").innerText = user.uname + "@gmail.com";
+            document.getElementById("td-name").innerText = user.name;
+            document.getElementById("td-dept").innerText = user.dept;
+            
+            // Get fresh employee leaves values from lms_employees in case they changed
+            const employees = getEmployees();
+            const freshUser = employees.find(emp => emp.empId === user.empId) || user;
+            
+            document.getElementById("td-earn").innerText = freshUser.earn;
+            document.getElementById("td-sick").innerText = freshUser.sick;
+            document.getElementById("td-casual").innerText = freshUser.casual;
+        });
+    </script>
+</body>
+</html>

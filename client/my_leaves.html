@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>::Leave Management::</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="table.css">
+    <style>
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 90%;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .status-Pending { color: #d97706; font-weight: bold; }
+        .status-Granted { color: #059669; font-weight: bold; }
+        .status-Rejected { color: #dc2626; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="textview">
+        <center>
+            <h1>Leave Management System</h1>
+            
+            <!-- Navigation bar placeholder -->
+            <div id="navi-container"></div>
+            
+            <h2>My All Leaves</h2>
+            
+            <div id="leaves-container">
+                <!-- Table will be dynamically inserted here -->
+            </div>
+        </center>
+    </div>
+
+    <!-- Load database and navigation -->
+    <script src="../shared.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const session = getCurrentSession();
+            if (!session || session.role !== "client") {
+                window.location.href = "index.html";
+                return;
+            }
+
+            injectNavbar("../");
+
+            const freshUser = session.user;
+            const leaves = getLeaves();
+            const myLeaves = leaves.filter(l => l.empId === freshUser.empId);
+
+            const container = document.getElementById("leaves-container");
+
+            if (myLeaves.length === 0) {
+                container.innerHTML = "<p>No leave requests found.</p>";
+                return;
+            }
+
+            let tableHTML = `
+                <table>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type Of Leave</th>
+                        <th>Request Date</th>
+                        <th>Days Of Leave</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Status</th>
+                        <th>More Data</th>
+                    </tr>
+            `;
+
+            myLeaves.forEach(l => {
+                tableHTML += `
+                    <tr>
+                        <td>${l.empName}</td>
+                        <td>${l.type}</td>
+                        <td>${l.requestDate}</td>
+                        <td>${l.days}</td>
+                        <td>${l.startDate}</td>
+                        <td>${l.endDate}</td>
+                        <td><span class="status-${l.status}">${l.status}</span></td>
+                        <td><a href="#" onclick="alert('Downloading PDF report for ${l.type} starting ${l.startDate}... (Mocked PDF download)')">Download</a></td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `</table>`;
+            container.innerHTML = tableHTML;
+        });
+    </script>
+</body>
+</html>

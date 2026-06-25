@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>::Leave Management::</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+    <div class="textview">
+        <center>
+            <h1>Leave Management System</h1>
+            
+            <!-- Navigation bar placeholder -->
+            <div id="navi-container"></div>
+            
+            <h2>Reset Your Password</h2>
+            
+            <div id="error-message"></div>
+            <br/>
+
+            <form id="recoveryForm">
+                <table>
+                    <tr>
+                        <td>Enter email id : </td>
+                        <td><input type="text" name="recoverykey" id="recoverykey" class="textbox shadow selected" placeholder="your registered email id" required></td>
+                    </tr>
+                    <tr>
+                        <td><input type="submit" value="Reset Password" class="recovery shadow"></td>
+                    </tr>
+                </table>
+            </form>
+        </center>
+    </div>
+
+    <!-- Load database and navigation -->
+    <script src="../shared.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            injectNavbar("../");
+
+            document.getElementById("recoveryForm").addEventListener("submit", function(event) {
+                event.preventDefault();
+                const email = document.getElementById("recoverykey").value.trim();
+                
+                const employees = getEmployees();
+                const matched = employees.find(emp => (emp.uname + "@gmail.com").toLowerCase() === email.toLowerCase());
+
+                if (matched) {
+                    alert(`Password Recovery Simulation:\n\nEmail sent successfully to ${email} (simulated).\nYour current password is: ${matched.pass}`);
+                    window.location.href = "index.html";
+                } else {
+                    document.getElementById("error-message").innerHTML = "<div class='error'><b><u>Email not registered! Try: vijay@gmail.com</u></b></div>";
+                }
+            });
+        });
+    </script>
+</body>
+</html>

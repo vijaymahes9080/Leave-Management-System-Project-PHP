@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>::Leave Management::</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="table.css">
+    <style>
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 95%;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .btn-delete {
+            background-color: #dc2626;
+            color: white;
+            padding: 4px 8px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 0.9em;
+            cursor: pointer;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="textview">
+        <center>
+            <h1>Leave Management System</h1>
+            
+            <!-- Navigation bar placeholder -->
+            <div id="navi-container"></div>
+            
+            <h2>Search and Manage Employees</h2>
+            
+            <div style="margin-bottom: 20px;">
+                <input type="text" id="search-input" class="textbox shadow selected" placeholder="Search by name or username" style="width: 250px;">
+                <button onclick="performSearch()" class="login-button shadow" style="margin-left: 10px;">Search</button>
+            </div>
+
+            <div id="results-count" style="font-weight: bold; margin-bottom: 10px;"></div>
+            
+            <div id="results-table-container">
+                <!-- Table will be dynamically populated -->
+            </div>
+        </center>
+    </div>
+
+    <!-- Load database and navigation -->
+    <script src="../shared.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const session = getCurrentSession();
+            if (!session || session.role !== "admin") {
+                window.location.href = "index.html";
+                return;
+            }
+
+            injectNavbar("../");
+            performSearch(); // Show all department employees initially
+        });
+
+        function performSearch() {
+            const session = getCurrentSession();
+            const adminDept = session.user.dept;
+            const query = document.getElementById("search-input").value.trim().toLowerCase();
+            const employees = getEmployees();
+
+            // Filter employees by admin's department
+            let filtered = employees.filter(emp => emp.dept === adminDept);
+
+            // Filter by search query if provided
+            if (query !== "") {
+                filtered = filtered.filter(emp => 
+                    emp.name.toLowerCase().includes(query) || 
+                    emp.uname.toLowerCase().includes(query)
+                );
+            }
+
+            document.getElementById("results-count").innerText = `${filtered.length} Employee(s) found in ${adminDept} Department`;
+
+            const container = document.getElementById("results-table-container");
+            if (filtered.length === 0) {
+                container.innerHTML = "<p>No matching employees found.</p>";
+                return;
+            }
+
+            let tableHTML = `
+                <table>
+                    <tr>
+                        <th>Username</th>
+                        <th>Employee Name</th>
+                        <th>Employee Email</th>
+                        <th>Department</th>
+                        <th>Earn Leaves</th>
+                        <th>Sick Leaves</th>
+                        <th>Casual Leaves</th>
+                        <th>Action</th>
+                    </tr>
+            `;
+
+            filtered.forEach(emp => {
+                tableHTML += `
+                    <tr>
+                        <td>${emp.uname}</td>
+                        <td>${emp.name}</td>
+                        <td>${emp.uname}@gmail.com</td>
+                        <td>${emp.dept}</td>
+                        <td>${emp.earn}</td>
+                        <td>${emp.sick}</td>
+                        <td>${emp.casual}</td>
+                        <td>
+                            <button class="btn-delete" onclick="deleteEmployee('${emp.empId}')">Delete This User</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `</table>`;
+            container.innerHTML = tableHTML;
+        }
+
+        function deleteEmployee(empId) {
+            if (!confirm("Are you sure you want to delete this employee? This will remove all their records.")) return;
+
+            let employees = getEmployees();
+            employees = employees.filter(emp => emp.empId !== empId);
+            saveEmployees(employees);
+
+            // Also clean up any leave requests from this employee
+            let leaves = getLeaves();
+            leaves = leaves.filter(l => l.empId !== empId);
+            saveLeaves(leaves);
+
+            alert("Employee deleted successfully.");
+            performSearch();
+        }
+    </script>
+</body>
+</html>

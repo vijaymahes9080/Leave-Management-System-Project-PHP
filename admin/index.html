@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>::Leave Management::</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+        .error {
+            color: #ff0000;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="textview">
+        <center>
+            <h1>Leave Management System</h1>
+            
+            <!-- Navigation bar placeholder -->
+            <div id="navi-container"></div>
+            
+            <h2>Admin Login</h2>
+            
+            <div id="error-message"></div>
+            <br/>
+
+            <form name="login" id="adminLoginForm">
+                <table>
+                    <tr>
+                        <td>Username :</td>
+                        <td><input type="text" name="uname" id="uname" class="textbox shadow selected" placeholder="Your Username"></td>
+                    </tr>
+                    <tr>
+                        <td>Password :</td>
+                        <td><input type="password" name="pass" id="pass" class="textbox shadow selected" placeholder="Your Password"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="submit" value="Login" class="login-button shadow"></td>
+                    </tr>
+                </table>
+            </form>
+            
+            <p style="font-size: 0.9em; color: gray; margin-top: 20px;">Try Username: <strong>admin</strong> & Password: <strong>admin</strong></p>
+        </center>
+    </div>
+
+    <!-- Load database and navigation -->
+    <script src="../shared.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Since we're in the admin subfolder, relativeRoot is "../"
+            injectNavbar("../");
+
+            const loginForm = document.getElementById("adminLoginForm");
+            loginForm.addEventListener("submit", function(event) {
+                event.preventDefault();
+                
+                const usernameInput = document.getElementById("uname").value.trim();
+                const passwordInput = document.getElementById("pass").value.trim();
+                
+                if (usernameInput === "") {
+                    alert("Please Enter Username !");
+                    return;
+                }
+                if (passwordInput === "") {
+                    alert("Please Enter Password !");
+                    return;
+                }
+
+                // Check credentials in Mock DB
+                const admins = getAdmins();
+                const matchedAdmin = admins.find(
+                    adm => adm.uname.toLowerCase() === usernameInput.toLowerCase() && adm.pass === passwordInput
+                );
+
+                if (matchedAdmin) {
+                    setCurrentSession(matchedAdmin, "admin");
+                    window.location.href = "view_leaves.html";
+                } else {
+                    const errorDiv = document.getElementById("error-message");
+                    errorDiv.innerHTML = "<div class='error'><b>Invalid Admin Credentials!</b></div>";
+                }
+            });
+        });
+    </script>
+</body>
+</html>

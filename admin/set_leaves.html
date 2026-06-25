@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>::Leave Management::</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        table { margin: 20px auto; }
+        td { padding: 10px; }
+    </style>
+</head>
+<body>
+    <div class="textview">
+        <center>
+            <h1>Leave Management System</h1>
+            
+            <!-- Navigation bar placeholder -->
+            <div id="navi-container"></div>
+            
+            <h2>Set Default Leaves For Your Employees</h2>
+            
+            <div id="info-message"></div>
+            <br/>
+
+            <form id="setLeavesForm">
+                <table>
+                    <tr>
+                        <td>Sick Leave : </td>
+                        <td><input type="number" min="0" name="setsickleave" id="setsickleave" class="textbox shadow selected" required></td>
+                    </tr>
+                    <tr>
+                        <td>Earn Leave : </td>
+                        <td><input type="number" min="0" name="setearnleave" id="setearnleave" class="textbox shadow selected" required></td>
+                    </tr>
+                    <tr>
+                        <td>Casual Leave : </td>
+                        <td><input type="number" min="0" name="setcasualleave" id="setcasualleave" class="textbox shadow selected" required></td>
+                    </tr>
+                    <tr>
+                        <td><input type="submit" value="Set" class="login-button shadow"></td>
+                    </tr>
+                </table>
+            </form>
+        </center>
+    </div>
+
+    <!-- Load database and navigation -->
+    <script src="../shared.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const session = getCurrentSession();
+            if (!session || session.role !== "admin") {
+                window.location.href = "index.html";
+                return;
+            }
+
+            injectNavbar("../");
+
+            const admin = session.user;
+            
+            // Populate current values in the form
+            document.getElementById("setsickleave").value = admin.sickMax || 15;
+            document.getElementById("setearnleave").value = admin.earnMax || 20;
+            document.getElementById("setcasualleave").value = admin.casualMax || 10;
+
+            document.getElementById("setLeavesForm").addEventListener("submit", function(event) {
+                event.preventDefault();
+
+                const sickVal = parseInt(document.getElementById("setsickleave").value, 10);
+                const earnVal = parseInt(document.getElementById("setearnleave").value, 10);
+                const casualVal = parseInt(document.getElementById("setcasualleave").value, 10);
+
+                if (isNaN(sickVal) || isNaN(earnVal) || isNaN(casualVal)) {
+                    alert("Please enter valid numeric values!");
+                    return;
+                }
+
+                // 1. Update Admin configuration
+                const admins = getAdmins();
+                const matchedAdmin = admins.find(a => a.uname === admin.uname);
+                if (matchedAdmin) {
+                    matchedAdmin.sickMax = sickVal;
+                    matchedAdmin.earnMax = earnVal;
+                    matchedAdmin.casualMax = casualVal;
+                    saveAdmins(admins);
+                    
+                    // Update active session values too
+                    session.user = matchedAdmin;
+                    setCurrentSession(matchedAdmin, "admin");
+                }
+
+                // 2. Update all employees in this department
+                const employees = getEmployees();
+                employees.forEach(emp => {
+                    if (emp.dept === admin.dept) {
+                        emp.sick = sickVal;
+                        emp.earn = earnVal;
+                        emp.casual = casualVal;
+                    }
+                });
+                saveEmployees(employees);
+
+                alert("Leaves updated successfully for all department employees!");
+                window.location.reload();
+            });
+        });
+    </script>
+</body>
+</html>

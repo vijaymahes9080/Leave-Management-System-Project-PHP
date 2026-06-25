@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>::Leave Management::</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+        .error {
+            color: #ff0000;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="textview">
+        <center>
+            <h1>Leave Management System</h1>
+            
+            <!-- Navigation bar placeholder -->
+            <div id="navi-container"></div>
+            
+            <h2>Client Login</h2>
+            
+            <div id="error-message"></div>
+            <br/>
+
+            <form name="login" id="loginForm">
+                <table>
+                    <tr>
+                        <td>Username : </td>
+                        <td><input type="text" name="uname" id="uname" class="textbox shadow selected" placeholder="Your Username"></td>
+                    </tr>
+                    <tr>
+                        <td>Password : </td>
+                        <td><input type="password" name="pass" id="pass" class="textbox shadow selected" placeholder="Your Password"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="submit" value="Login" class="login-button shadow"></td>
+                        <td><a href="passrecovery.html">Forgot Your password ?</a></td>
+                    </tr>
+                </table>
+            </form>
+            
+            <p>Your Password is your date of birth in format (dd-mm-yyyy) (Default: 25-06-1995)</p>
+            <p style="font-size: 0.9em; color: gray;">Try Username: <strong>vijay</strong> & Password: <strong>25-06-1995</strong></p>
+        </center>
+    </div>
+
+    <!-- Load database and navigation -->
+    <script src="../shared.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Since we're in the client subfolder, relativeRoot is "../"
+            injectNavbar("../");
+
+            const loginForm = document.getElementById("loginForm");
+            loginForm.addEventListener("submit", function(event) {
+                event.preventDefault();
+                
+                const usernameInput = document.getElementById("uname").value.trim();
+                const passwordInput = document.getElementById("pass").value.trim();
+                
+                if (usernameInput === "") {
+                    alert("Please Enter Username !");
+                    return;
+                }
+                if (passwordInput === "") {
+                    alert("Please Enter Password !");
+                    return;
+                }
+
+                // Check credentials in Mock DB
+                const employees = getEmployees();
+                const matchedEmployee = employees.find(
+                    emp => emp.uname.toLowerCase() === usernameInput.toLowerCase() && emp.pass === passwordInput
+                );
+
+                if (matchedEmployee) {
+                    setCurrentSession(matchedEmployee, "client");
+                    window.location.href = "home.html";
+                } else {
+                    const errorDiv = document.getElementById("error-message");
+                    errorDiv.innerHTML = "<div class='error'><b>Invalid Username/Password!</b></div>";
+                }
+            });
+        });
+    </script>
+</body>
+</html>
